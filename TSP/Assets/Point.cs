@@ -64,9 +64,17 @@ namespace TSP.Assets
             elipse.SetValue(Canvas.LeftProperty, this.x);
             elipse.SetValue(Canvas.TopProperty,  this.y);
 
-            label.SetValue(Canvas.LeftProperty, this.x + 1);
-            label.SetValue(Canvas.TopProperty, this.y - 5);
-
+            if(index > 9)
+            {
+                label.SetValue(Canvas.LeftProperty, this.x - 3);
+                label.SetValue(Canvas.TopProperty, this.y - 5);
+            }
+            else
+            {
+                label.SetValue(Canvas.LeftProperty, this.x + 1);
+                label.SetValue(Canvas.TopProperty, this.y - 5);
+            }
+            
             Canvas.SetZIndex(label, 3);
             Canvas.SetZIndex(elipse, 2);
         }

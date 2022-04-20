@@ -14,8 +14,8 @@
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition Height="80"/>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="100"/>
             <RowDefinition/>
             <RowDefinition Height="100"/>
             
@@ -74,25 +74,51 @@
         </GroupBox>
         
         <!--2 WIERSZ-->
-        <StackPanel Grid.Row="1"
-                    Grid.Column="0"
-                    Margin="10"
-                    HorizontalAlignment="Center"
-                    Orientation="Horizontal"
-                    >
-            
+        <Grid Grid.Column="0"
+              Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+
             <Button Name="BTNrandomGeneration"
                     Content="Generuj punkty"
-                    Width="125"
-                    Height="40"
-                    Padding="10" Click="BTNrandomGeneration_Click"
-                    Margin="0 0 20 0"/>
+                    Width="100"
+                    Height="30"
+                    Click="BTNrandomGeneration_Click"
+                    Grid.Column="0"
+                    Grid.Row="0"/>
+            
             <Button Name="BTNcalculateBestRoute"
                     Content="Oblicz trasę"
-                    Width="125"
-                    Height="40"
-                    Padding="10" Click="BTNcalculateBestRoute_Click"/>
-        </StackPanel>
+                    Width="100"
+                    Height="30"
+                    Click="BTNcalculateBestRoute_Click"
+                    Grid.Column="1"
+                    Grid.Row="0"/>
+            
+            <Button Name="BTNcancel"
+                    Content="Zatrzymaj"
+                    Width="100"
+                    Height="30"
+                    Grid.Column="3"
+                    Grid.Row="0" Click="BTNcancel_Click"/>
+
+            <ProgressBar Grid.ColumnSpan="3"
+                         Grid.Row="1"
+                         Padding="8"
+                         Minimum="1"
+                         Height="20"
+                         Width="auto"
+                         Margin="10 0 10 0"
+                         Name="PBdoneGenerations"/>
+        </Grid>
         
         <!--3 WIERSZ-->
         <lvc:CartesianChart Series="{Binding SeriesCollection}" 
