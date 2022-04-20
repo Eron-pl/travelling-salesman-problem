@@ -84,158 +84,172 @@ namespace TSP
 
         private void BTNrandomGeneration_Click(object sender, RoutedEventArgs e)
         {
-            if (bestRouteDistance.Count > 0) bestRouteDistance.Clear();
-            if (PBdoneGenerations.Value > 0) PBdoneGenerations.Value = 0;
-            cv.Children.Clear();
-            points.Clear();
-
-            int numberOfPoints = Int32.Parse(TBnumberOfPoints.Text);
-            Random r = new Random();
-
-            // Generowanie losowych punktów
-            for (int i = 0; i < numberOfPoints; i++)
+            if (String.IsNullOrEmpty(TBnumberOfGenerations.Text) || String.IsNullOrEmpty(TBnumberOfPopulations.Text) || String.IsNullOrEmpty(TBnumberOfPoints.Text))
             {
-                points.Add(
-                  new(r.Next((int)cv.Width - 10), r.Next((int)cv.Height - 10), cv, i)
-                );
+                MessageBox.Show("Nie wprowadzono wszystkich danych!", "Uwaga!");
+            }
+            else
+            {
+                if (bestRouteDistance.Count > 0) bestRouteDistance.Clear();
+                if (PBdoneGenerations.Value > 0) PBdoneGenerations.Value = 0;
+                cv.Children.Clear();
+                points.Clear();
+
+                int numberOfPoints = Int32.Parse(TBnumberOfPoints.Text);
+                Random r = new Random();
+
+                // Generowanie losowych punktów
+                for (int i = 0; i < numberOfPoints; i++)
+                {
+                    points.Add(
+                      new(r.Next((int)cv.Width - 10), r.Next((int)cv.Height - 10), cv, i)
+                    );
+                }
             }
         }
 
         private void BTNcalculateBestRoute_Click(object sender, RoutedEventArgs e)
         {
-            if(bestRouteDistance.Count > 0) bestRouteDistance.Clear();
-            if (PBdoneGenerations.Value > 0) PBdoneGenerations.Value = 0;
-            TBbestRoute.Text = string.Empty;
-
-            numberOfPoints = Int32.Parse(TBnumberOfPoints.Text);
-            numberOfPopulations = Int32.Parse(TBnumberOfPopulations.Text);
-            numberOfGenerations = Int32.Parse(TBnumberOfGenerations.Text);
-
-            PBdoneGenerations.Maximum = numberOfGenerations;
-            
-            worker = new BackgroundWorker();
-            worker.DoWork += worker_DoWork;
-            worker.ProgressChanged += worker_ProgressChanged;
-            worker.RunWorkerCompleted += worker_RunWorkerCompleted;
-            worker.WorkerReportsProgress = true;
-            worker.WorkerSupportsCancellation = true;
-            worker.RunWorkerAsync(numberOfGenerations);
-
-            generationIterator = 1;
-
-            Data.ClearFile();
-            Data.AddText("Format danych: numer generacji, fitness, ścieżka, dystans ścieżki\n\n");
-
-            void worker_DoWork(object? sender, DoWorkEventArgs e)
+            if (String.IsNullOrEmpty(TBnumberOfGenerations.Text) || String.IsNullOrEmpty(TBnumberOfPopulations.Text) || String.IsNullOrEmpty(TBnumberOfPoints.Text))
             {
-                BackgroundWorker worker = sender as BackgroundWorker;
+                MessageBox.Show("Nie wprowadzono wszystkich danych!", "Uwaga!");
+            }
+            else
+            {
+                if (bestRouteDistance.Count > 0) bestRouteDistance.Clear();
+                if (PBdoneGenerations.Value > 0) PBdoneGenerations.Value = 0;
+                TBbestRoute.Text = string.Empty;
 
-                // Generowanie populacji
-                population = Population.GeneratePopulation(numberOfPopulations, numberOfPoints);
+                numberOfPoints = Int32.Parse(TBnumberOfPoints.Text);
+                numberOfPopulations = Int32.Parse(TBnumberOfPopulations.Text);
+                numberOfGenerations = Int32.Parse(TBnumberOfGenerations.Text);
 
-                bestRouteDistance.Add(Route.FindLowestDistance(population, points));
+                PBdoneGenerations.Maximum = numberOfGenerations;
 
-                while (generationIterator < numberOfGenerations)
+                worker = new BackgroundWorker();
+                worker.DoWork += worker_DoWork;
+                worker.ProgressChanged += worker_ProgressChanged;
+                worker.RunWorkerCompleted += worker_RunWorkerCompleted;
+                worker.WorkerReportsProgress = true;
+                worker.WorkerSupportsCancellation = true;
+                worker.RunWorkerAsync(numberOfGenerations);
+
+                generationIterator = 1;
+
+                Data.ClearFile();
+                Data.AddText("Format danych: numer generacji, fitness, ścieżka, dystans ścieżki\n\n");
+
+                void worker_DoWork(object? sender, DoWorkEventArgs e)
                 {
-                    if (worker.CancellationPending)
+                    BackgroundWorker worker = sender as BackgroundWorker;
+
+                    // Generowanie populacji
+                    population = Population.GeneratePopulation(numberOfPopulations, numberOfPoints);
+
+                    bestRouteDistance.Add(Route.FindLowestDistance(population, points));
+
+                    while (generationIterator < numberOfGenerations)
                     {
-                        e.Cancel = true;
-                        break;
-                    }
-
-                    Data.AddText($"======GENERATION : {generationIterator} ======");
-                    foreach (var invidual in population)
-                    {
-                        Data.AddInvidual(Fitness.GetFitness(invidual, points), invidual, Route.CalculateDistance(invidual, points), generationIterator);
-                    }
-                    Data.AddText($"\n");
-
-                    // Ewaluacja fitnessu każdego osobnika
-                    var populationsInviduals = new List<Invidual>();
-                    for (int i = 0; i < population.Count; i++)
-                    {
-                        populationsInviduals.Add(
-                          new(Fitness.GetFitness(population[i], points), population[i])
-                        );
-                    }
-
-                    // Selekcja
-                    var bestInviduals = new List<Invidual>();
-                    for (int i = 0; i < (numberOfPopulations / 2); i++)
-                    {
-                        bestInviduals.Add(
-                          populationsInviduals[Selection.Tournament(numberOfPopulations, populationsInviduals)]
-                        );
-                    }
-
-                    List<List<int>> tempRoute = new List<List<int>>();
-                    List<double> tempFitness = new List<double>();
-
-                    for (int i = 0; i < numberOfPopulations; i++)
-                    {
-                        tempRoute.Add(
-                          Crossover.Breeding(bestInviduals[random.Next(0, bestInviduals.Count)], bestInviduals[random.Next(0, bestInviduals.Count)], numberOfPoints + 1)
-                        );
-
-                        tempFitness.Add(
-                          Fitness.GetFitness(tempRoute[i], points)
-                        );
-                    }
-
-                    var children = new List<Invidual>();
-
-                    for (int i = 0; i < numberOfPopulations; i++)
-                    {
-                        children.Add(
-                          new Invidual(tempFitness[i], tempRoute[i])
-                        );
-                    }
-
-                    bestRouteDistance.Add(Route.FindLowestDistance(children, points));
-
-                    population.Clear();
-                    foreach (var invidual in children)
-                    {
-                        population.Add(invidual.Route);
-                    }
-
-                    generationIterator++;
-                    worker.ReportProgress(generationIterator);
-
-
-                    var bestRoute = Route.FindBestRoute(population, points);
-
-                    this.Dispatcher.Invoke(() =>
-                    {
-                        Route.DrawRoute(bestRoute, cv, points);
-                        StringBuilder routeString = new StringBuilder();
-                        routeString.Append("Najlepsza ścieżka: ");
-                        for (int i = 0; i < bestRoute.Count; i++)
+                        if (worker.CancellationPending)
                         {
-                            if (i == bestRoute.Count - 1)
-                                routeString.Append(bestRoute[i] + 1);
-                            else
-                                routeString.Append($"{(bestRoute[i] + 1)} → ");
+                            e.Cancel = true;
+                            break;
                         }
-                        TBbestRoute.Text = routeString.ToString();
 
-                        SeriesCollection = new SeriesCollection {
+                        Data.AddText($"======GENERATION : {generationIterator} ======");
+                        foreach (var invidual in population)
+                        {
+                            Data.AddInvidual(Fitness.GetFitness(invidual, points), invidual, Route.CalculateDistance(invidual, points), generationIterator);
+                        }
+                        Data.AddText($"\n");
+
+                        // Ewaluacja fitnessu każdego osobnika
+                        var populationsInviduals = new List<Invidual>();
+                        for (int i = 0; i < population.Count; i++)
+                        {
+                            populationsInviduals.Add(
+                              new(Fitness.GetFitness(population[i], points), population[i])
+                            );
+                        }
+
+                        // Selekcja
+                        var bestInviduals = new List<Invidual>();
+                        for (int i = 0; i < (numberOfPopulations / 2); i++)
+                        {
+                            bestInviduals.Add(
+                              populationsInviduals[Selection.Tournament(numberOfPopulations, populationsInviduals)]
+                            );
+                        }
+
+                        List<List<int>> tempRoute = new List<List<int>>();
+                        List<double> tempFitness = new List<double>();
+
+                        for (int i = 0; i < numberOfPopulations; i++)
+                        {
+                            tempRoute.Add(
+                              Crossover.Breeding(bestInviduals[random.Next(0, bestInviduals.Count)], bestInviduals[random.Next(0, bestInviduals.Count)], numberOfPoints + 1)
+                            );
+
+                            tempFitness.Add(
+                              Fitness.GetFitness(tempRoute[i], points)
+                            );
+                        }
+
+                        var children = new List<Invidual>();
+
+                        for (int i = 0; i < numberOfPopulations; i++)
+                        {
+                            children.Add(
+                              new Invidual(tempFitness[i], tempRoute[i])
+                            );
+                        }
+
+                        bestRouteDistance.Add(Route.FindLowestDistance(children, points));
+
+                        population.Clear();
+                        foreach (var invidual in children)
+                        {
+                            population.Add(invidual.Route);
+                        }
+
+                        generationIterator++;
+                        worker.ReportProgress(generationIterator);
+
+
+                        var bestRoute = Route.FindBestRoute(population, points);
+
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            Route.DrawRoute(bestRoute, cv, points);
+                            StringBuilder routeString = new StringBuilder();
+                            routeString.Append("Najlepsza ścieżka: ");
+                            for (int i = 0; i < bestRoute.Count; i++)
+                            {
+                                if (i == bestRoute.Count - 1)
+                                    routeString.Append(bestRoute[i] + 1);
+                                else
+                                    routeString.Append($"{(bestRoute[i] + 1)} → ");
+                            }
+                            TBbestRoute.Text = routeString.ToString();
+
+                            SeriesCollection = new SeriesCollection {
                      new LineSeries {
                             Title = "Najkrótszy dystans",
                             Values = bestRouteDistance
                      }
                 };
 
-                        var labels = new string[numberOfGenerations];
-                        for (int i = 0; i < numberOfGenerations; i++)
-                        {
-                            labels[i] = (i + 1).ToString();
-                        }
+                            var labels = new string[numberOfGenerations];
+                            for (int i = 0; i < numberOfGenerations; i++)
+                            {
+                                labels[i] = (i + 1).ToString();
+                            }
 
-                        Labels = labels;
+                            Labels = labels;
 
-                        DataContext = this;
-                    });
+                            DataContext = this;
+                        });
+                    }
                 }
             }
         }
