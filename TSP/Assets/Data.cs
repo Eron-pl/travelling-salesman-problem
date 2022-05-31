@@ -13,7 +13,8 @@ namespace TSP.Assets
     public static class Data
     {
         public static bool failToCreateLog = false;
-        public static string filepath = Directory.GetCurrentDirectory() + @"\data.csv";
+        //public static string filepath = Directory.GetCurrentDirectory() + @"\data.csv";
+        public static string filepath = "D:\\" + @"\data.csv";
 
         public static void AddInvidual(double fitness, List<int> route, double distance, int generetionNumber)
         {

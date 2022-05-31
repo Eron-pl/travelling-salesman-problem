@@ -92,6 +92,8 @@ namespace TSP
             {
                 if (bestRouteDistance.Count > 0) bestRouteDistance.Clear();
                 if (PBdoneGenerations.Value > 0) PBdoneGenerations.Value = 0;
+                TBbestRoute.Text = "" ;
+                TBbestDistance.Text = "";
                 cv.Children.Clear();
                 points.Clear();
 
@@ -118,7 +120,8 @@ namespace TSP
             {
                 if (bestRouteDistance.Count > 0) bestRouteDistance.Clear();
                 if (PBdoneGenerations.Value > 0) PBdoneGenerations.Value = 0;
-                TBbestRoute.Text = string.Empty;
+                TBbestRoute.Text = "";
+                TBbestDistance.Text = "";
 
                 numberOfPoints = Int32.Parse(TBnumberOfPoints.Text);
                 numberOfPopulations = Int32.Parse(TBnumberOfPopulations.Text);
@@ -215,7 +218,6 @@ namespace TSP
                         generationIterator++;
                         worker.ReportProgress(generationIterator);
 
-
                         var bestRoute = Route.FindBestRoute(population, points);
 
                         this.Dispatcher.Invoke(() =>
@@ -230,7 +232,10 @@ namespace TSP
                                 else
                                     routeString.Append($"{(bestRoute[i] + 1)} → ");
                             }
+
                             TBbestRoute.Text = routeString.ToString();
+
+                            TBbestDistance.Text = "Długość trasy: " + Route.FindLowestDistance(children, points).ToString();
 
                             SeriesCollection = new SeriesCollection {
                      new LineSeries {
